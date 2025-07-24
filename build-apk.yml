@@ -1,0 +1,41 @@
+
+name: Build APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup buildozer (Docker)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip git zip
+          pip3 install buildozer cython==0.29.36
+          sudo apt-get install -y openjdk-17-jdk
+          buildozer android debug || true
+
+      - name: Build with dockerized buildozer
+        uses: kivy/buildozer-action@v1
+        with:
+          workdir: .
+          buildozer_version: latest
+          command: buildozer android debug
+
+      - name: Find APK
+        run: |
+          echo "APK list:"
+          find . -name "*.apk"
+      
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Terminal-APK
+          path: bin/*.apk
